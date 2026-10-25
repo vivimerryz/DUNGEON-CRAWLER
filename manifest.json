@@ -1,0 +1,10 @@
+{
+  "name": "Dungeon Crawler",
+  "short_name": "Dungeon Crawler",
+  "description": "A touch-first dungeon escape game.",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#d9efec",
+  "theme_color": "#d9efec"
+}

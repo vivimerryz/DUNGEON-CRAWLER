@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#d9efec" />
+  <meta name="description" content="Dungeon Crawler — a touch-first, no-login dungeon escape game." />
+  <title>Dungeon Crawler</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css?v=5" />
+</head>
+<body>
+  <main class="game-shell" aria-label="Dungeon Crawler game">
+    <canvas id="gameCanvas" aria-label="Dungeon game world"></canvas>
+    <div class="vignette" aria-hidden="true"></div>
+    <div class="scanlines" aria-hidden="true"></div>
+
+    <header class="hud" id="hud" hidden>
+      <div class="hud-brand"><span class="brand-mark">✦</span><span>Dungeon Crawler</span></div>
+      <div class="hud-center">
+        <span class="hud-kicker">DEPTH</span>
+        <strong id="floorLabel">01 / 03</strong>
+      </div>
+      <div class="hud-stats">
+        <div class="stat-block health-block">
+          <div class="stat-line"><span>VITALS</span><span id="healthText">100 / 100</span></div>
+          <div class="meter"><span id="healthMeter"></span></div>
+        </div>
+        <div class="stat-block"><span class="stat-label">SCORE</span><strong id="scoreText">000000</strong></div>
+          <div class="stat-block"><span class="stat-label">DEFEATED</span><strong id="killsText">00</strong></div>
+      </div>
+    </header>
+
+    <section class="title-screen" id="titleScreen">
+      <div class="title-copy">
+        <div class="eyebrow"><span class="eyebrow-line"></span> a touch-first descent <span class="eyebrow-line"></span></div>
+        <h1><span>DUNGEON</span><em>CRAWLER</em></h1>
+        <p class="tagline">Find the way out.<br /><span>Leave nothing breathing.</span></p>
+        <button class="primary-button" id="playButton" type="button"><span class="button-icon">▶</span><span>ENTER THE MAZE</span></button>
+        <div class="promise-row"><span>NO ADS</span><i></i><span>NO LOGIN</span><i></i><span>JUST SURVIVE</span></div>
+      </div>
+      <div class="title-art" aria-hidden="true">
+        <div class="moon"></div>
+        <div class="mist mist-a"></div><div class="mist mist-b"></div>
+        <div class="ruin ruin-left"></div><div class="ruin ruin-right"></div>
+        <div class="hero-silhouette"><div class="hero-head"></div><div class="hero-cloak"></div><div class="hero-blade"></div></div>
+        <div class="eye eye-a"></div><div class="eye eye-b"></div><div class="eye eye-c"></div>
+      </div>
+      <div class="title-foot"><span>◈</span> drag to move <span>◈</span> tap to strike <span>◈</span> hold to sprint</div>
+    </section>
+
+    <section class="result-screen" id="resultScreen" hidden>
+      <div class="result-panel">
+        <div class="eyebrow" id="resultEyebrow">THE DUNGEON REMEMBERS</div>
+        <h2 id="resultTitle">YOU ESCAPED</h2>
+        <p id="resultBlurb">The gate groans shut behind you.</p>
+        <div class="result-stats">
+          <div><span>SCORE</span><strong id="resultScore">000000</strong></div>
+          <div><span>ENEMIES STOPPED</span><strong id="resultKills">00</strong></div>
+          <div><span>DEPTH REACHED</span><strong id="resultFloor">03 / 03</strong></div>
+        </div>
+        <button class="primary-button" id="restartButton" type="button"><span class="button-icon">↻</span><span>DESCEND AGAIN</span></button>
+      </div>
+    </section>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="objective" id="objective" hidden><span class="objective-dot"></span><span id="objectiveText">Find the way out</span></div>
+
+    <section class="controls" id="controls" hidden aria-label="Touch controls">
+      <div class="joystick" id="joystick" aria-label="Movement joystick">
+        <div class="joystick-ring"><div class="joystick-stick" id="joystickStick"></div></div>
+        <span class="joystick-label">MOVE</span>
+      </div>
+      <div class="action-cluster">
+        <button class="control-button sprint-button" id="sprintButton" type="button" aria-label="Hold to sprint"><span class="action-glyph">↯</span><span>SPRINT</span><small id="fuelText">100</small></button>
+        <button class="control-button attack-button" id="attackButton" type="button" aria-label="Attack"><span class="action-glyph">✦</span><span>ATTACK</span></button>
+      </div>
+    </section>
+  </main>
+  <script src="script.js?v=5"></script>
+</body>
+</html>
