@@ -7,7 +7,7 @@
   <meta name="description" content="Dungeon Crawler — a touch-first, no-login dungeon escape game." />
   <title>Dungeon Crawler</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="styles.css?v=9" />
+  <link rel="stylesheet" href="styles.css?v=10" />
 </head>
 <body>
   <main class="game-shell" aria-label="Dungeon Crawler game">
@@ -19,7 +19,7 @@
       <div class="hud-brand"><span class="brand-mark">✦</span><span>Dungeon Crawler</span></div>
       <div class="hud-center">
         <span class="hud-kicker">DEPTH</span>
-        <strong id="floorLabel">01 / 03</strong>
+        <strong id="floorLabel">01 / ∞</strong>
       </div>
       <div class="hud-stats">
         <div class="stat-block health-block">
@@ -57,7 +57,7 @@
         <div class="result-stats">
           <div><span>SCORE</span><strong id="resultScore">000000</strong></div>
           <div><span>ENEMIES STOPPED</span><strong id="resultKills">00</strong></div>
-          <div><span>DEPTH REACHED</span><strong id="resultFloor">03 / 03</strong></div>
+          <div><span>DEPTH REACHED</span><strong id="resultFloor">01 / ∞</strong></div>
         </div>
         <button class="primary-button" id="restartButton" type="button"><span class="button-icon">↻</span><span>DESCEND AGAIN</span></button>
       </div>
@@ -80,6 +80,6 @@
       </div>
     </section>
   </main>
-  <script src="script.js?v=9"></script>
+  <script src="script.js?v=10"></script>
 </body>
 </html>

@@ -19,11 +19,11 @@
   const joystickStick = document.querySelector('#joystickStick');
 
   const TAU = Math.PI * 2;
-  const TOTAL_FLOORS = 4;
   const WOLF_COUNT = 17;
   const WOLF_DAMAGE = 13;
   const WOLF_ATTACK_RANGE = 180;
   const FLOOR_KILL_TARGET = 20;
+  const WARDEN_INTERVAL = 5;
   const WEAPON_COUNT = 2;
   const SAVE_KEY = 'dungeon-crawler-save-v4';
   let view = { w: 0, h: 0, dpr: 1 };
@@ -50,7 +50,8 @@
   let exitGate;
   let boss = null;
 
-  const input = { moveX: 0, moveY: 0, sprint: false };
+  const input = { moveX: 0, moveY: 0, targetMoveX: 0, targetMoveY: 0, sprint: false };
+  const keyboardState = { left: false, right: false, up: false, down: false };
   let joystickPointer = null;
   let lastMoveAngle = 0;
 
@@ -63,6 +64,8 @@
   const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   const angleDiff = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
   const formatNumber = (value, length = 6) => String(Math.max(0, Math.floor(value))).padStart(length, '0');
+  const formatFloor = (value) => String(Math.max(1, Math.floor(value))).padStart(2, '0');
+  const isWardenFloor = () => floor % WARDEN_INTERVAL === 0;
 
   function resize() {
     view.dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -78,7 +81,10 @@
   function resetInput() {
     input.moveX = 0;
     input.moveY = 0;
+    input.targetMoveX = 0;
+    input.targetMoveY = 0;
     input.sprint = false;
+    Object.keys(keyboardState).forEach((key) => { keyboardState[key] = false; });
     joystickPointer = null;
     joystickStick.style.transform = 'translate(0, 0)';
     sprintButton.classList.remove('is-held');
@@ -103,7 +109,7 @@
     resultScreen.hidden = true;
     resetInput();
     loadFloor(true);
-    showToast('DESCEND · FLOOR 01');
+    showToast(`DESCEND · FLOOR ${formatFloor(floor)}`);
   }
 
   function makePlayer() {
@@ -171,7 +177,7 @@
     try { save = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (error) { return false; }
     if (!save || save.version !== 1 || !save.player || !save.world || !Array.isArray(save.wolves)) return false;
     state = 'playing';
-    floor = clamp(Number(save.floor) || 1, 1, TOTAL_FLOORS);
+    floor = Math.max(1, Math.floor(Number(save.floor) || 1));
     score = Number(save.score) || 0;
     kills = Number(save.kills) || 0;
     floorKills = Number(save.floorKills) || 0;
@@ -203,7 +209,7 @@
     updateObjective();
     updateCamera();
     updateHud();
-    showToast(`RUN RESTORED · FLOOR 0${floor}`);
+    showToast(`RUN RESTORED · FLOOR ${formatFloor(floor)}`);
     return true;
   }
 
@@ -230,7 +236,7 @@
     boss = null;
     exitGate = { x: world.w - 175, y: world.h / 2, open: false, triggered: false };
     createFloorGeometry();
-    spawnMonsters(4 + floor * 3);
+    spawnMonsters(4 + Math.min(floor, 10) * 3);
     spawnPotions(3);
     spawnWeapons(WEAPON_COUNT);
     updateObjective();
@@ -263,7 +269,7 @@
       { x: 1650, y: 600, w: 240, h: 26 }, { x: 1650, y: 870, w: 240, h: 26 },
       { x: 2050, y: 300, w: 230, h: 26 }, { x: 2050, y: 1060, w: 230, h: 26 },
     ];
-    for (let i = 0; i < 15 + floor * 4; i += 1) {
+    for (let i = 0; i < 15 + Math.min(floor, 12) * 4; i += 1) {
       const x = 420 + Math.floor(rand() * 1840 / 80) * 80;
       const y = 110 + Math.floor(rand() * 1280 / 80) * 80;
       world.walls.push({ x, y, w: 38, h: 38, pillar: true });
@@ -318,7 +324,9 @@
   }
 
   function spawnBoss() {
-    boss = { x: world.w - 480, y: world.h / 2, r: 64, hp: 860, maxHp: 860, angle: Math.PI, attackCooldown: 0.5, hitTimer: 0, dead: false, phase: 0 };
+    const difficulty = Math.min(floor, 25);
+    const bossHealth = 860 + difficulty * 70;
+    boss = { x: world.w - 480, y: world.h / 2, r: 64, hp: bossHealth, maxHp: bossHealth, angle: Math.PI, attackCooldown: 0.5, hitTimer: 0, dead: false, phase: 0 };
     showToast('THE ABYSS AWAKENS');
     camera.shake = 16;
     updateObjective();
@@ -342,14 +350,14 @@
   }
 
   function updateObjective() {
-    if (floor < TOTAL_FLOORS) {
-      objectiveText.textContent = floorKills < FLOOR_KILL_TARGET ? `Defeat 20 attackers · ${floorKills}/20` : '20 defeated · reach the far end';
-    } else if (!boss) {
-      objectiveText.textContent = floorKills < FLOOR_KILL_TARGET ? `Defeat 20 attackers · ${floorKills}/20` : '20 defeated · reach the Warden';
-    } else if (!boss.dead) {
+    if (floorKills < FLOOR_KILL_TARGET) {
+      objectiveText.textContent = `Defeat 20 attackers · ${floorKills}/20`;
+    } else if (isWardenFloor() && !boss) {
+      objectiveText.textContent = '20 defeated · reach the Warden';
+    } else if (boss && !boss.dead) {
       objectiveText.textContent = `The Warden · ${Math.ceil((boss.hp / boss.maxHp) * 100)}% remaining`;
     } else {
-      objectiveText.textContent = 'The dungeon is quiet · escape';
+      objectiveText.textContent = '20 defeated · reach the far end';
     }
   }
 
@@ -375,6 +383,9 @@
     player.immortalTimer = Math.max(0, player.immortalTimer - dt);
     player.r = 17;
 
+    const movementBlend = 1 - Math.exp(-dt * 14);
+    input.moveX = lerp(input.moveX, input.targetMoveX, movementBlend);
+    input.moveY = lerp(input.moveY, input.targetMoveY, movementBlend);
     const moveMagnitude = Math.hypot(input.moveX, input.moveY);
     const moving = moveMagnitude > .08;
     const sprinting = input.sprint && moving && player.sprintFuel > 1;
@@ -395,20 +406,18 @@
     updateWeapons(dt);
     updateParticles(dt);
 
-    if (floor < TOTAL_FLOORS && floorKills >= FLOOR_KILL_TARGET && !exitGate.open) {
+    if (floorKills >= FLOOR_KILL_TARGET && !exitGate.open && (!isWardenFloor() || (boss && boss.dead))) {
       exitGate.open = true;
       score += 250 * floor;
       showToast('20 DEFEATED · THE GATE IS OPEN');
       updateObjective();
     }
-    if (floor === TOTAL_FLOORS && floorKills >= FLOOR_KILL_TARGET && !boss && player.x > world.w - 620) spawnBoss();
+    if (isWardenFloor() && floorKills >= FLOOR_KILL_TARGET && !boss && player.x > world.w - 620) spawnBoss();
     if (exitGate.open && player.x > exitGate.x - 80 && Math.abs(player.y - exitGate.y) < 130) {
-      if (floor < TOTAL_FLOORS) {
-        score += Math.max(0, 500 - Math.floor(floorTime * 3));
-        floor += 1;
-        loadFloor();
-        showToast(`FLOOR 0${floor} · DEEPER STILL`);
-      } else if (boss && boss.dead) finishGame(true);
+      score += Math.max(0, 500 - Math.floor(floorTime * 3));
+      floor += 1;
+      loadFloor();
+      showToast(`FLOOR ${formatFloor(floor)} · DEEPER STILL`);
     }
     updateCamera();
     updateHud();
@@ -489,7 +498,8 @@
         monster.angle = chaseAngle;
         const targetRadius = target === player ? player.r : target.r;
         if (d > monster.r + targetRadius + 12) {
-          const speed = monster.type === 'runner' ? 92 + floor * 9 : 66 + floor * 8;
+          const difficulty = Math.min(floor, 20);
+          const speed = monster.type === 'runner' ? 92 + difficulty * 9 : 66 + difficulty * 8;
           moveCircle(monster, Math.cos(chaseAngle) * speed * dt, Math.sin(chaseAngle) * speed * dt);
         } else if (monster.attackCooldown <= 0) {
           if (target === player) hurtPlayer(1);
@@ -654,7 +664,7 @@
   }
 
   function updateHud() {
-    document.querySelector('#floorLabel').textContent = `0${floor} / 0${TOTAL_FLOORS}`;
+    document.querySelector('#floorLabel').textContent = `${formatFloor(floor)} / ∞`;
     document.querySelector('#scoreText').textContent = formatNumber(score);
     document.querySelector('#killsText').textContent = String(kills).padStart(2, '0');
     document.querySelector('#healthText').textContent = `${Math.ceil(player.hp)} / ${player.maxHp}`;
@@ -678,7 +688,7 @@
     document.querySelector('#resultBlurb').textContent = won ? 'The gate groans shut behind you. For now.' : 'The dungeon keeps what it catches. Descend again?';
     document.querySelector('#resultScore').textContent = formatNumber(score);
     document.querySelector('#resultKills').textContent = String(kills).padStart(2, '0');
-    document.querySelector('#resultFloor').textContent = `0${floor} / 0${TOTAL_FLOORS}`;
+    document.querySelector('#resultFloor').textContent = `${formatFloor(floor)} / ∞`;
   }
 
   function render() {
@@ -900,14 +910,23 @@
     const centerX = rect.left + rect.width / 2; const centerY = rect.top + rect.height / 2;
     const max = 45; const dx = clientX - centerX; const dy = clientY - centerY; const length = Math.hypot(dx, dy); const scale = Math.min(1, max / Math.max(1, length));
     const knobX = dx * scale; const knobY = dy * scale;
-    input.moveX = knobX / max; input.moveY = knobY / max;
+    input.targetMoveX = knobX / max; input.targetMoveY = knobY / max;
     joystickStick.style.transform = `translate(${knobX}px, ${knobY}px)`;
+  }
+
+  function updateKeyboardDirection() {
+    if (joystickPointer !== null) return;
+    const x = (keyboardState.right ? 1 : 0) - (keyboardState.left ? 1 : 0);
+    const y = (keyboardState.down ? 1 : 0) - (keyboardState.up ? 1 : 0);
+    const length = Math.hypot(x, y) || 1;
+    input.targetMoveX = x / length;
+    input.targetMoveY = y / length;
   }
 
   function bindControls() {
     joystick.addEventListener('pointerdown', (event) => { event.preventDefault(); joystickPointer = event.pointerId; joystick.setPointerCapture(event.pointerId); setJoystick(event.clientX, event.clientY); });
     joystick.addEventListener('pointermove', (event) => { if (event.pointerId === joystickPointer) { event.preventDefault(); setJoystick(event.clientX, event.clientY); } });
-    const releaseJoystick = (event) => { if (event.pointerId === joystickPointer) { joystickPointer = null; input.moveX = 0; input.moveY = 0; joystickStick.style.transform = 'translate(0, 0)'; } };
+    const releaseJoystick = (event) => { if (event.pointerId === joystickPointer) { joystickPointer = null; input.targetMoveX = 0; input.targetMoveY = 0; updateKeyboardDirection(); joystickStick.style.transform = 'translate(0, 0)'; } };
     joystick.addEventListener('pointerup', releaseJoystick); joystick.addEventListener('pointercancel', releaseJoystick); joystick.addEventListener('lostpointercapture', releaseJoystick);
     attackButton.addEventListener('pointerdown', (event) => { event.preventDefault(); attackButton.classList.add('is-held'); attack(); });
     ['pointerup', 'pointercancel', 'pointerleave'].forEach((eventName) => attackButton.addEventListener(eventName, () => attackButton.classList.remove('is-held')));
@@ -915,13 +934,18 @@
     ['pointerup', 'pointercancel', 'pointerleave'].forEach((eventName) => sprintButton.addEventListener(eventName, () => { input.sprint = false; sprintButton.classList.remove('is-held'); }));
   }
 
+  const keyboardCodes = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down' };
   window.addEventListener('keydown', (event) => {
     if (event.code === 'Space') { event.preventDefault(); attack(); }
     if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') input.sprint = true;
-    const keys = { ArrowLeft: [-1, 0], a: [-1, 0], ArrowRight: [1, 0], d: [1, 0], ArrowUp: [0, -1], w: [0, -1], ArrowDown: [0, 1], s: [0, 1] };
-    if (keys[event.key]) { input.moveX = keys[event.key][0]; input.moveY = keys[event.key][1]; }
+    const direction = keyboardCodes[event.code];
+    if (direction) { event.preventDefault(); keyboardState[direction] = true; updateKeyboardDirection(); }
   });
-  window.addEventListener('keyup', (event) => { if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') input.sprint = false; if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','a','d','w','s'].includes(event.key)) { input.moveX = 0; input.moveY = 0; } });
+  window.addEventListener('keyup', (event) => {
+    if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') input.sprint = false;
+    const direction = keyboardCodes[event.code];
+    if (direction) { event.preventDefault(); keyboardState[direction] = false; updateKeyboardDirection(); }
+  });
   window.addEventListener('resize', resize);
   window.addEventListener('beforeunload', saveGame);
   playButton.addEventListener('click', startGame);
