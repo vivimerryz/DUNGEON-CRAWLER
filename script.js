@@ -62,7 +62,6 @@
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const lerp = (a, b, t) => a + (b - a) * t;
   const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-  const angleDiff = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
   const formatNumber = (value, length = 6) => String(Math.max(0, Math.floor(value))).padStart(length, '0');
   const formatFloor = (value) => String(Math.max(1, Math.floor(value))).padStart(2, '0');
   const isWardenFloor = () => floor % WARDEN_INTERVAL === 0;
@@ -121,8 +120,8 @@
       x: player.x,
       y: player.y,
       r: 11,
-      hp: 300,
-      maxHp: 300,
+      hp: 50,
+      maxHp: 50,
       dead: false,
       angle: 0,
       formationAngle: (index / WOLF_COUNT) * TAU,
@@ -187,8 +186,8 @@
     player = { ...save.player, immortalTimer: decodeTimer(save.player.immortalTimer) };
     wolves = save.wolves.map((wolf) => ({
       ...wolf,
-      hp: Number.isFinite(wolf.hp) ? wolf.hp : 300,
-      maxHp: Number.isFinite(wolf.maxHp) ? wolf.maxHp : 300,
+      hp: clamp(Number.isFinite(wolf.hp) ? wolf.hp : 50, 0, 50),
+      maxHp: 50,
       dead: Boolean(wolf.dead) || (Number.isFinite(wolf.hp) && wolf.hp <= 0),
       hurtTimer: Number(wolf.hurtTimer) || 0,
       immortalTimer: decodeTimer(wolf.immortalTimer),
@@ -503,7 +502,7 @@
           moveCircle(monster, Math.cos(chaseAngle) * speed * dt, Math.sin(chaseAngle) * speed * dt);
         } else if (monster.attackCooldown <= 0) {
           if (target === player) hurtPlayer(1);
-          else hurtWolf(target, 5);
+          else hurtWolf(target, 1);
           monster.attackCooldown = monster.type === 'runner' ? 1.05 : 1.3;
         }
       } else {
@@ -529,7 +528,7 @@
     if (d > targetRadius + 88) moveCircle(boss, Math.cos(angle) * 40 * dt, Math.sin(angle) * 40 * dt);
     else if (boss.attackCooldown <= 0) {
       if (target === player) hurtPlayer(20);
-      else hurtWolf(target, 5);
+      else hurtWolf(target, 1);
       boss.attackCooldown = 1.05;
       for (let i = 0; i < 10; i += 1) emitParticle(target.x, target.y, '#bd4b40', 55 + rand() * 50);
     }
@@ -607,13 +606,11 @@
     if (state !== 'playing' || player.attackCooldown > 0) return;
     player.attackCooldown = .42;
     player.attackTimer = .24;
-    const weaponRange = player.weapon === 'spear' ? 154 : player.weapon === 'sword' ? 125 : 101;
-    const range = player.giantTimer > 0 ? weaponRange + 37 : weaponRange;
     const damage = player.damage;
     const hit = (target) => {
       const d = distance(player, target);
-      const angle = Math.atan2(target.y - player.y, target.x - player.x);
-      if (d <= range + target.r && (Math.abs(angleDiff(angle, player.angle)) < 1.15 || d < 46)) {
+      const contactRange = player.r + target.r + (player.giantTimer > 0 ? 14 : 8);
+      if (d <= contactRange) {
         target.hp -= damage;
         target.hitTimer = .22;
         camera.shake = Math.max(camera.shake, 4);
@@ -966,5 +963,5 @@
 })();
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  navigator.serviceWorker.register('./sw.js?v=11').catch(() => {});
+  navigator.serviceWorker.register('./sw.js?v=12').catch(() => {});
 }
