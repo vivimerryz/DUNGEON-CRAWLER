@@ -66,6 +66,7 @@ h1 em { padding-left: clamp(24px, 3.2vw, 58px); color: #62d5c4; font-style: norm
 .title-foot span { margin: 0 10px; color: var(--ember); }
 
 .controls { position: absolute; z-index: 9; inset: auto 0 max(16px, env(safe-area-inset-bottom)) 0; display: flex; justify-content: space-between; align-items: end; padding: 0 clamp(18px, 5vw, 66px); pointer-events: none; }
+.movement-cluster { display: flex; align-items: end; gap: 10px; pointer-events: auto; }
 .joystick, .action-cluster { pointer-events: auto; }
 .joystick { width: 150px; height: 150px; position: relative; display: grid; place-items: center; }
 .joystick-ring { width: 124px; height: 124px; display: grid; place-items: center; border: 1px solid rgba(244,235,218,.2); border-radius: 50%; background: radial-gradient(circle, rgba(132,137,162,.18), rgba(16,18,28,.1) 68%, transparent 69%); box-shadow: inset 0 0 25px rgba(0,0,0,.4), 0 0 22px rgba(0,0,0,.2); }
@@ -212,3 +213,10 @@ html, body { background: #d9efec; }
 .controls .control-button { color: #214f5d; }
 .controls .action-glyph { color: #1f7f83; text-shadow: 0 0 12px rgba(42,156,166,.35); }
 .controls .control-button small { color: #467b55; }
+
+/* In-game restart control. */
+.game-restart-button { position: static; z-index: 2; display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 0 11px; border: 1px solid rgba(31, 93, 105, .42); border-radius: 999px; background: rgba(238, 251, 247, .88); color: #245767; box-shadow: 0 5px 16px rgba(29, 77, 88, .16); cursor: pointer; font: 800 9px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .14em; pointer-events: auto; transition: transform .16s ease, filter .16s ease, box-shadow .16s ease; }
+.game-restart-button span:first-child { color: #1f7f83; font-size: 15px; line-height: 1; }
+.game-restart-button:hover, .game-restart-button:focus-visible { filter: brightness(1.04); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(29, 77, 88, .22); outline: none; }
+.game-restart-button:active { transform: translateY(1px) scale(.97); }
+@media (max-width: 560px) { .movement-cluster { gap: 4px; }.movement-cluster .joystick { width: 120px; }.game-restart-button { width: 72px; min-height: 32px; padding: 0 6px; gap: 4px; font-size: 7px; letter-spacing: .08em; } }

@@ -12,6 +12,7 @@
   const toast = document.querySelector('#toast');
   const playButton = document.querySelector('#playButton');
   const restartButton = document.querySelector('#restartButton');
+  const gameRestartButton = document.querySelector('#gameRestartButton');
   const attackButton = document.querySelector('#attackButton');
   const sprintButton = document.querySelector('#sprintButton');
   const joystick = document.querySelector('#joystick');
@@ -187,7 +188,7 @@
       immortalTimer: decodeTimer(wolf.immortalTimer),
     }));
     monsters = Array.isArray(save.monsters) ? save.monsters : [];
-    potions = Array.isArray(save.potions) ? save.potions : [];
+    potions = Array.isArray(save.potions) ? save.potions.filter((potion) => floor >= 2 && floor <= 3 || potion.kind !== 'immortal') : [];
     weapons = Array.isArray(save.weapons) ? save.weapons : [];
     particles = [];
     world = save.world;
@@ -302,7 +303,8 @@
   function spawnPotions(count) {
     for (let i = 0; i < count; i += 1) {
       const kind = ['giant', 'speed', 'immortal'][i];
-      const pos = floor === 1 && kind === 'immortal' ? { x: 1120, y: 750 } : freeSpot(320, 0, 240);
+      if (kind === 'immortal' && (floor < 2 || floor > 3)) continue;
+      const pos = freeSpot(320, 0, 240);
       potions.push({ x: pos.x, y: pos.y, r: 15, active: true, bob: rand() * TAU, kind });
     }
   }
@@ -791,7 +793,7 @@
 
   function drawMonster(monster) {
     const flash = monster.hitTimer > 0;
-    ctx.save(); ctx.translate(monster.x, monster.y); ctx.rotate(monster.angle);
+    ctx.save(); ctx.translate(monster.x, monster.y);
     ctx.globalAlpha = flash ? .75 : 1;
     ctx.fillStyle = 'rgba(0,0,0,.48)'; ctx.beginPath(); ctx.ellipse(0, 30, monster.r * 1.25, monster.r * .42, 0, 0, TAU); ctx.fill();
     const shirt = monster.type === 'runner' ? '#427684' : '#6b596f';
@@ -814,7 +816,7 @@
     const flash = wolf.hitTimer > 0 || wolf.hurtTimer > 0;
     const fur = flash ? '#c7fff1' : ['#557983', '#6c7f92', '#416d78'][wolf.index % 3];
     const giant = wolf.giantTimer > 0;
-    ctx.save(); ctx.translate(wolf.x, wolf.y); ctx.rotate(wolf.angle); ctx.scale(giant ? 1.45 : 1, giant ? 1.45 : 1);
+    ctx.save(); ctx.translate(wolf.x, wolf.y); ctx.scale(giant ? 1.45 : 1, giant ? 1.45 : 1);
     ctx.fillStyle = 'rgba(0,0,0,.34)'; ctx.beginPath(); ctx.ellipse(-1, 17, 22, 7, 0, 0, TAU); ctx.fill();
     if (giant) { ctx.strokeStyle = 'rgba(169,223,141,.82)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, 28 + Math.sin(elapsed * 5 + wolf.index) * 2, 0, TAU); ctx.stroke(); }
     if (wolf.speedTimer > 0) { ctx.strokeStyle = 'rgba(94,216,201,.88)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, 24 + Math.sin(elapsed * 7 + wolf.index) * 2, 0, TAU); ctx.stroke(); }
@@ -835,7 +837,7 @@
 
   function drawBoss() {
     const flash = boss.hitTimer > 0;
-    ctx.save(); ctx.translate(boss.x, boss.y); ctx.rotate(boss.angle * .12);
+    ctx.save(); ctx.translate(boss.x, boss.y);
     const pulse = 1 + Math.sin(boss.phase * 4) * .06;
     ctx.fillStyle = 'rgba(0,0,0,.58)'; ctx.beginPath(); ctx.ellipse(0, 65, 98, 33, 0, 0, TAU); ctx.fill();
     ctx.fillStyle = flash ? '#b7fff0' : '#203b46'; ctx.beginPath(); ctx.moveTo(-64, 58); ctx.lineTo(-50, -42); ctx.lineTo(-23, -65); ctx.lineTo(0, -45); ctx.lineTo(28, -69); ctx.lineTo(58, -36); ctx.lineTo(72, 61); ctx.closePath(); ctx.fill();
@@ -857,7 +859,7 @@
   function drawPlayer() {
     const flash = player.hurtTimer > 0;
     const giant = player.giantTimer > 0;
-    ctx.save(); ctx.translate(player.x, player.y); ctx.rotate(player.angle); ctx.scale(giant ? 1.6 : 1, giant ? 1.6 : 1);
+    ctx.save(); ctx.translate(player.x, player.y); ctx.scale(giant ? 1.6 : 1, giant ? 1.6 : 1);
     ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.beginPath(); ctx.ellipse(0, 23, 29, 10, 0, 0, TAU); ctx.fill();
     if (giant) { ctx.strokeStyle = 'rgba(169,223,141,.78)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, 31 + Math.sin(elapsed * 5) * 3, 0, TAU); ctx.stroke(); }
     if (player.speedTimer > 0) { ctx.strokeStyle = 'rgba(94,216,201,.82)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, 28 + Math.sin(elapsed * 7) * 3, 0, TAU); ctx.stroke(); }
@@ -924,6 +926,7 @@
   window.addEventListener('beforeunload', saveGame);
   playButton.addEventListener('click', startGame);
   restartButton.addEventListener('click', startGame);
+  gameRestartButton.addEventListener('click', startGame);
   bindControls();
   resize();
   restoreGame();

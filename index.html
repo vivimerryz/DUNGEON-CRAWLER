@@ -7,7 +7,7 @@
   <meta name="description" content="Dungeon Crawler — a touch-first, no-login dungeon escape game." />
   <title>Dungeon Crawler</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="styles.css?v=5" />
+  <link rel="stylesheet" href="styles.css?v=9" />
 </head>
 <body>
   <main class="game-shell" aria-label="Dungeon Crawler game">
@@ -67,9 +67,12 @@
     <div class="objective" id="objective" hidden><span class="objective-dot"></span><span id="objectiveText">Find the way out</span></div>
 
     <section class="controls" id="controls" hidden aria-label="Touch controls">
-      <div class="joystick" id="joystick" aria-label="Movement joystick">
-        <div class="joystick-ring"><div class="joystick-stick" id="joystickStick"></div></div>
-        <span class="joystick-label">MOVE</span>
+      <div class="movement-cluster">
+        <div class="joystick" id="joystick" aria-label="Movement joystick">
+          <div class="joystick-ring"><div class="joystick-stick" id="joystickStick"></div></div>
+          <span class="joystick-label">MOVE</span>
+        </div>
+        <button class="game-restart-button" id="gameRestartButton" type="button" aria-label="Restart the game"><span>↻</span><span>RESTART</span></button>
       </div>
       <div class="action-cluster">
         <button class="control-button sprint-button" id="sprintButton" type="button" aria-label="Hold to sprint"><span class="action-glyph">↯</span><span>SPRINT</span><small id="fuelText">100</small></button>
@@ -77,6 +80,6 @@
       </div>
     </section>
   </main>
-  <script src="script.js?v=5"></script>
+  <script src="script.js?v=9"></script>
 </body>
 </html>
