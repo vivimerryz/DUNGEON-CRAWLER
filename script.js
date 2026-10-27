@@ -24,6 +24,8 @@
   const TAU = Math.PI * 2;
   const WOLF_COUNT = 17;
   const WOLF_DAMAGE = 13;
+  const WOLF_MAX_HP = 100;
+  const WOLF_HIT_DAMAGE = 15;
   const FLOOR_KILL_TARGET = 20;
   const WARDEN_INTERVAL = 5;
   const WEAPON_COUNT = 2;
@@ -125,8 +127,8 @@
       x: player.x,
       y: player.y,
       r: 11,
-      hp: 50,
-      maxHp: 50,
+      hp: WOLF_MAX_HP,
+      maxHp: WOLF_MAX_HP,
       dead: false,
       angle: 0,
       formationAngle: (index / WOLF_COUNT) * TAU,
@@ -191,14 +193,19 @@
     floorTime = Number(save.floorTime) || 0;
     seed = Number(save.seed) || 12;
     player = { ...save.player, immortalTimer: decodeTimer(save.player.immortalTimer) };
-    wolves = save.wolves.map((wolf) => ({
-      ...wolf,
-      hp: clamp(Number.isFinite(wolf.hp) ? wolf.hp : 50, 0, 50),
-      maxHp: 50,
-      dead: Boolean(wolf.dead) || (Number.isFinite(wolf.hp) && wolf.hp <= 0),
-      hurtTimer: Number(wolf.hurtTimer) || 0,
-      immortalTimer: decodeTimer(wolf.immortalTimer),
-    }));
+    wolves = save.wolves.map((wolf) => {
+      const savedMaxHp = Number(wolf.maxHp) || 50;
+      const savedHp = Number.isFinite(wolf.hp) ? wolf.hp : WOLF_MAX_HP;
+      const upgradedHp = savedMaxHp < WOLF_MAX_HP ? WOLF_MAX_HP : savedHp;
+      return {
+        ...wolf,
+        hp: clamp(upgradedHp, 0, WOLF_MAX_HP),
+        maxHp: WOLF_MAX_HP,
+        dead: Boolean(wolf.dead) || (Number.isFinite(wolf.hp) && wolf.hp <= 0),
+        hurtTimer: Number(wolf.hurtTimer) || 0,
+        immortalTimer: decodeTimer(wolf.immortalTimer),
+      };
+    });
     monsters = Array.isArray(save.monsters) ? save.monsters : [];
     potions = Array.isArray(save.potions) ? save.potions.filter((potion) => potion.kind !== 'immortal' || floor % 2 === 0) : [];
     weapons = Array.isArray(save.weapons) ? save.weapons : [];
@@ -516,7 +523,7 @@
           moveCircle(monster, Math.cos(chaseAngle) * speed * dt, Math.sin(chaseAngle) * speed * dt);
         } else if (monster.attackCooldown <= 0) {
           if (target === player) hurtPlayer(1);
-          else hurtWolf(target, 1);
+          else hurtWolf(target, WOLF_HIT_DAMAGE);
           monster.attackCooldown = monster.type === 'runner' ? 1.05 : 1.3;
         }
       } else {
@@ -542,7 +549,7 @@
     if (d > targetRadius + 88) moveCircle(boss, Math.cos(angle) * 40 * dt, Math.sin(angle) * 40 * dt);
     else if (boss.attackCooldown <= 0) {
       if (target === player) hurtPlayer(20);
-      else hurtWolf(target, 1);
+      else hurtWolf(target, WOLF_HIT_DAMAGE);
       boss.attackCooldown = 1.05;
       for (let i = 0; i < 10; i += 1) emitParticle(target.x, target.y, '#bd4b40', 55 + rand() * 50);
     }
@@ -1003,5 +1010,5 @@
 })();
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  navigator.serviceWorker.register('./sw.js?v=14').catch(() => {});
+  navigator.serviceWorker.register('./sw.js?v=15').catch(() => {});
 }
