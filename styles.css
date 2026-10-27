@@ -95,6 +95,22 @@ h1 em { padding-left: clamp(24px, 3.2vw, 58px); color: #62d5c4; font-style: norm
 .result-panel h2 { color: #62d5c4; }
 .result-stats strong { color: #dff8ef; }
 
+.break-screen { position: absolute; z-index: 21; inset: 0; display: grid; place-items: center; padding: 24px; background: rgba(198, 229, 228, .72); backdrop-filter: blur(8px); }
+.break-panel { width: min(590px, 100%); padding: clamp(30px, 6vw, 56px); border: 1px solid rgba(44, 119, 125, .3); background: linear-gradient(145deg, rgba(245, 253, 249, .98), rgba(204, 233, 234, .98)); box-shadow: 0 30px 80px rgba(26, 83, 94, .2), inset 0 1px 0 rgba(255,255,255,.8); text-align: center; }
+.break-panel h2 { margin: 18px 0 12px; color: #217b82; font: 800 clamp(39px, 8vw, 68px)/.9 Georgia, serif; letter-spacing: -.06em; }
+.break-panel p { margin: 0 auto 28px; max-width: 420px; color: #245767; font: 16px/1.4 Georgia, serif; }
+.break-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; }
+.break-actions .primary-button, .secondary-button { min-height: 52px; padding: 0 18px; }
+.secondary-button { display: inline-flex; align-items: center; gap: 13px; border: 1px solid rgba(44, 119, 125, .45); border-radius: 2px; background: rgba(223, 244, 240, .72); color: #245767; cursor: pointer; font: 800 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .12em; transition: transform .18s ease, filter .18s ease, box-shadow .18s ease; }
+.secondary-button:hover, .secondary-button:focus-visible { filter: brightness(1.04); transform: translateY(-2px); box-shadow: 0 10px 22px rgba(26, 83, 94, .16); outline: none; }
+.secondary-button:active { transform: translateY(1px) scale(.98); }
+
+@media (max-width: 520px) {
+  .break-panel { padding: 30px 18px; }
+  .break-actions { display: grid; }
+  .break-actions .primary-button, .break-actions .secondary-button { justify-content: center; width: 100%; }
+}
+
 /* Bright mist pass: keep the palette eerie, but make the scene easy to read. */
 html, body { background: #c6dddd; }
 .game-shell { background: #d8e9e7; }

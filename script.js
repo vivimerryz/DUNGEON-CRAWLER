@@ -5,6 +5,7 @@
   const ctx = canvas.getContext('2d');
   const titleScreen = document.querySelector('#titleScreen');
   const resultScreen = document.querySelector('#resultScreen');
+  const breakScreen = document.querySelector('#breakScreen');
   const hud = document.querySelector('#hud');
   const controls = document.querySelector('#controls');
   const objective = document.querySelector('#objective');
@@ -13,6 +14,8 @@
   const playButton = document.querySelector('#playButton');
   const restartButton = document.querySelector('#restartButton');
   const gameRestartButton = document.querySelector('#gameRestartButton');
+  const breakYesButton = document.querySelector('#breakYesButton');
+  const breakNoButton = document.querySelector('#breakNoButton');
   const attackButton = document.querySelector('#attackButton');
   const sprintButton = document.querySelector('#sprintButton');
   const joystick = document.querySelector('#joystick');
@@ -21,7 +24,6 @@
   const TAU = Math.PI * 2;
   const WOLF_COUNT = 17;
   const WOLF_DAMAGE = 13;
-  const WOLF_ATTACK_RANGE = 180;
   const FLOOR_KILL_TARGET = 20;
   const WARDEN_INTERVAL = 5;
   const WEAPON_COUNT = 2;
@@ -33,6 +35,7 @@
   let score = 0;
   let kills = 0;
   let floorKills = 0;
+  let breakPromptPending = false;
   let elapsed = 0;
   let floorTime = 0;
   let nextToastTimeout;
@@ -97,6 +100,7 @@
     score = 0;
     kills = 0;
     floorKills = 0;
+    breakPromptPending = false;
     elapsed = 0;
     seed = 12;
     player = makePlayer();
@@ -106,6 +110,7 @@
     objective.hidden = false;
     titleScreen.hidden = true;
     resultScreen.hidden = true;
+    breakScreen.hidden = true;
     resetInput();
     loadFloor(true);
     showToast(`DESCEND · FLOOR ${formatFloor(floor)}`);
@@ -152,6 +157,7 @@
       score,
       kills,
       floorKills,
+      breakPromptPending,
       elapsed,
       floorTime,
       seed,
@@ -180,6 +186,7 @@
     score = Number(save.score) || 0;
     kills = Number(save.kills) || 0;
     floorKills = Number(save.floorKills) || 0;
+    breakPromptPending = Boolean(save.breakPromptPending);
     elapsed = Number(save.elapsed) || 0;
     floorTime = Number(save.floorTime) || 0;
     seed = Number(save.seed) || 12;
@@ -193,7 +200,7 @@
       immortalTimer: decodeTimer(wolf.immortalTimer),
     }));
     monsters = Array.isArray(save.monsters) ? save.monsters : [];
-    potions = Array.isArray(save.potions) ? save.potions.filter((potion) => floor >= 2 && floor <= 3 || potion.kind !== 'immortal') : [];
+    potions = Array.isArray(save.potions) ? save.potions.filter((potion) => potion.kind !== 'immortal' || floor % 2 === 0) : [];
     weapons = Array.isArray(save.weapons) ? save.weapons : [];
     particles = [];
     world = save.world;
@@ -201,6 +208,7 @@
     exitGate = save.exitGate || { x: world.w - 175, y: world.h / 2, open: false, triggered: false };
     titleScreen.hidden = true;
     resultScreen.hidden = true;
+    breakScreen.hidden = true;
     hud.hidden = false;
     controls.hidden = false;
     objective.hidden = false;
@@ -209,6 +217,7 @@
     updateCamera();
     updateHud();
     showToast(`RUN RESTORED · FLOOR ${formatFloor(floor)}`);
+    if (breakPromptPending && floor >= 15) showBreakPrompt();
     return true;
   }
 
@@ -308,7 +317,7 @@
   function spawnPotions(count) {
     for (let i = 0; i < count; i += 1) {
       const kind = ['giant', 'speed', 'immortal'][i];
-      if (kind === 'immortal' && (floor < 2 || floor > 3)) continue;
+      if (kind === 'immortal' && floor % 2 !== 0) continue;
       const pos = freeSpot(320, 0, 240);
       potions.push({ x: pos.x, y: pos.y, r: 15, active: true, bob: rand() * TAU, kind });
     }
@@ -417,6 +426,11 @@
       floor += 1;
       loadFloor();
       showToast(`FLOOR ${formatFloor(floor)} · DEEPER STILL`);
+      if (floor === 15) {
+        breakPromptPending = true;
+        saveGame();
+        showBreakPrompt();
+      }
     }
     updateCamera();
     updateHud();
@@ -467,8 +481,8 @@
       }
       const target = findWolfTarget(wolf);
       const targetDistance = target ? distance(wolf, target) : Infinity;
-      const attackRange = target ? WOLF_ATTACK_RANGE + target.r : 0;
-      if (target && targetDistance <= attackRange) {
+      const contactRange = target ? wolf.r + target.r + (wolf.giantTimer > 0 ? 14 : 8) : 0;
+      if (target && targetDistance <= contactRange) {
         wolf.angle = Math.atan2(target.y - wolf.y, target.x - wolf.x);
         if (wolf.attackCooldown <= 0 && !target.dead) {
           target.hp -= WOLF_DAMAGE;
@@ -671,18 +685,42 @@
     if (boss && !boss.dead) updateObjective();
   }
 
-  function finishGame(won) {
+  function showBreakPrompt() {
     if (state !== 'playing') return;
+    state = 'break-prompt';
+    resetInput();
+    controls.hidden = true;
+    objective.hidden = true;
+    breakScreen.hidden = false;
+  }
+
+  function continueAfterBreakPrompt() {
+    if (state !== 'break-prompt') return;
+    breakPromptPending = false;
+    state = 'playing';
+    breakScreen.hidden = true;
+    controls.hidden = false;
+    objective.hidden = false;
+    updateObjective();
+    saveGame();
+    showToast('KEEP GOING · FLOOR 15');
+  }
+
+  function finishGame(won, reason = '') {
+    if (state !== 'playing' && state !== 'break-prompt') return;
     state = won ? 'won' : 'lost';
+    breakPromptPending = false;
     clearSavedGame();
     resetInput();
     controls.hidden = true;
     objective.hidden = true;
+    breakScreen.hidden = true;
     hud.hidden = true;
     resultScreen.hidden = false;
-    document.querySelector('#resultEyebrow').textContent = won ? 'THE DUNGEON REMEMBERS' : 'THE DARK CLAIMS YOU';
-    document.querySelector('#resultTitle').textContent = won ? 'YOU ESCAPED' : 'YOU FELL';
-    document.querySelector('#resultBlurb').textContent = won ? 'The gate groans shut behind you. For now.' : 'The dungeon keeps what it catches. Descend again?';
+    const takingBreak = reason === 'break';
+    document.querySelector('#resultEyebrow').textContent = takingBreak ? 'A REST AT FLOOR 15' : won ? 'THE DUNGEON REMEMBERS' : 'THE DARK CLAIMS YOU';
+    document.querySelector('#resultTitle').textContent = takingBreak ? 'BREAK TIME' : won ? 'YOU ESCAPED' : 'YOU FELL';
+    document.querySelector('#resultBlurb').textContent = takingBreak ? 'You made it through 15 floors. Here are your run totals.' : won ? 'The gate groans shut behind you. For now.' : 'The dungeon keeps what it catches. Descend again?';
     document.querySelector('#resultScore').textContent = formatNumber(score);
     document.querySelector('#resultKills').textContent = String(kills).padStart(2, '0');
     document.querySelector('#resultFloor').textContent = `${formatFloor(floor)} / ∞`;
@@ -948,6 +986,8 @@
   playButton.addEventListener('click', startGame);
   restartButton.addEventListener('click', startGame);
   gameRestartButton.addEventListener('click', startGame);
+  breakYesButton.addEventListener('click', () => finishGame(true, 'break'));
+  breakNoButton.addEventListener('click', continueAfterBreakPrompt);
   bindControls();
   resize();
   restoreGame();
@@ -963,5 +1003,5 @@
 })();
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  navigator.serviceWorker.register('./sw.js?v=12').catch(() => {});
+  navigator.serviceWorker.register('./sw.js?v=14').catch(() => {});
 }

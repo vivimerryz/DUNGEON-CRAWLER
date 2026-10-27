@@ -7,7 +7,7 @@
   <meta name="description" content="Dungeon Crawler — a touch-first, no-login dungeon escape game." />
   <title>Dungeon Crawler</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="styles.css?v=12" />
+  <link rel="stylesheet" href="styles.css?v=14" />
 </head>
 <body>
   <main class="game-shell" aria-label="Dungeon Crawler game">
@@ -63,6 +63,18 @@
       </div>
     </section>
 
+    <section class="break-screen" id="breakScreen" hidden>
+      <div class="break-panel">
+        <div class="eyebrow">A REST IN THE DARK</div>
+        <h2>TAKE A BREAK?</h2>
+        <p>You reached floor 15. Would you like to pause and see your run totals?</p>
+        <div class="break-actions">
+          <button class="primary-button" id="breakYesButton" type="button"><span class="button-icon">✓</span><span>YES · SHOW SCORE</span></button>
+          <button class="secondary-button" id="breakNoButton" type="button"><span class="button-icon">→</span><span>NO · KEEP GOING</span></button>
+        </div>
+      </div>
+    </section>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <div class="objective" id="objective" hidden><span class="objective-dot"></span><span id="objectiveText">Find the way out</span></div>
 
@@ -80,6 +92,6 @@
       </div>
     </section>
   </main>
-  <script src="script.js?v=12"></script>
+  <script src="script.js?v=14"></script>
 </body>
 </html>

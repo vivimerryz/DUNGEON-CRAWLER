@@ -1,5 +1,5 @@
-const CACHE_NAME = 'dungeon-crawler-offline-v12';
-const APP_FILES = ['./', './index.html', './styles.css?v=12', './script.js?v=12', './manifest.json', './sw.js?v=12'];
+const CACHE_NAME = 'dungeon-crawler-offline-v14';
+const APP_FILES = ['./', './index.html', './styles.css?v=14', './script.js?v=14', './manifest.json', './sw.js?v=14'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_FILES)).then(() => self.skipWaiting()));
