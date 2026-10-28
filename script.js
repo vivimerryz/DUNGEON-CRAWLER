@@ -26,6 +26,7 @@
   const WOLF_DAMAGE = 13;
   const WOLF_MAX_HP = 100;
   const WOLF_HIT_DAMAGE = 15;
+  const IMMORTAL_ROUNDS = 2;
   const FLOOR_KILL_TARGET = 20;
   const WARDEN_INTERVAL = 5;
   const WEAPON_COUNT = 2;
@@ -119,7 +120,7 @@
   }
 
   function makePlayer() {
-    return { x: 160, y: 750, r: 17, hp: 1000, maxHp: 1000, speed: 192, damage: 34, weapon: 'claws', angle: 0, attackTimer: 0, attackCooldown: 0, giantTimer: 0, speedTimer: 0, immortalTimer: 0, sprintFuel: 100, hurtTimer: 0 };
+    return { x: 160, y: 750, r: 17, hp: 1000, maxHp: 1000, speed: 192, damage: 34, weapon: 'claws', angle: 0, attackTimer: 0, attackCooldown: 0, giantTimer: 0, speedTimer: 0, immortalTimer: 0, immortalRounds: 0, sprintFuel: 100, hurtTimer: 0 };
   }
 
   function makeWolves() {
@@ -139,6 +140,7 @@
       giantTimer: 0,
       speedTimer: 0,
       immortalTimer: 0,
+      immortalRounds: 0,
       index,
     }));
   }
@@ -149,6 +151,21 @@
 
   function decodeTimer(value) {
     return value === 'forever' ? Infinity : Number.isFinite(value) ? value : 0;
+  }
+
+  function decodeImmortalRounds(value, timer) {
+    const rounds = Number(value);
+    if (Number.isFinite(rounds)) return clamp(Math.floor(rounds), 0, IMMORTAL_ROUNDS);
+    return timer === 'forever' ? IMMORTAL_ROUNDS : 0;
+  }
+
+  function consumeImmortalRound(entity) {
+    if (!entity || entity.immortalRounds <= 0) return;
+    entity.immortalRounds -= 1;
+    if (entity.immortalRounds <= 0) {
+      entity.immortalRounds = 0;
+      entity.immortalTimer = 0;
+    }
   }
 
   function saveGame() {
@@ -192,7 +209,7 @@
     elapsed = Number(save.elapsed) || 0;
     floorTime = Number(save.floorTime) || 0;
     seed = Number(save.seed) || 12;
-    player = { ...save.player, immortalTimer: decodeTimer(save.player.immortalTimer) };
+    player = { ...save.player, immortalTimer: decodeTimer(save.player.immortalTimer), immortalRounds: decodeImmortalRounds(save.player.immortalRounds, save.player.immortalTimer) };
     wolves = save.wolves.map((wolf) => {
       const savedMaxHp = Number(wolf.maxHp) || 50;
       const savedHp = Number.isFinite(wolf.hp) ? wolf.hp : WOLF_MAX_HP;
@@ -204,6 +221,7 @@
         dead: Boolean(wolf.dead) || (Number.isFinite(wolf.hp) && wolf.hp <= 0),
         hurtTimer: Number(wolf.hurtTimer) || 0,
         immortalTimer: decodeTimer(wolf.immortalTimer),
+        immortalRounds: decodeImmortalRounds(wolf.immortalRounds, wolf.immortalTimer),
       };
     });
     monsters = Array.isArray(save.monsters) ? save.monsters : [];
@@ -235,6 +253,8 @@
     player.x = 156;
     player.y = world.h / 2;
     if (!first) {
+      consumeImmortalRound(player);
+      wolves.forEach(consumeImmortalRound);
       player.hp = Math.min(player.maxHp, player.hp + 35);
       player.sprintFuel = 100;
     }
@@ -571,15 +591,17 @@
           showToast('VELOCITY SURGE · THE PACK IS SUPER FAST');
         } else {
           player.immortalTimer = Infinity;
+          player.immortalRounds = IMMORTAL_ROUNDS;
           wolves.forEach((wolf) => {
             wolf.dead = false;
             wolf.hp = wolf.maxHp;
             wolf.hurtTimer = 0;
             wolf.immortalTimer = Infinity;
+            wolf.immortalRounds = IMMORTAL_ROUNDS;
             wolf.x = player.x + Math.cos(wolf.formationAngle) * 42;
             wolf.y = player.y + Math.sin(wolf.formationAngle) * 42;
           });
-          showToast('IMMORTAL FOREVER · THE PACK RETURNS');
+          showToast('IMMORTAL · 2 FLOORS · THE PACK RETURNS');
         }
         score += 150;
         const potionColor = potion.kind === 'giant' ? '#a9df8d' : potion.kind === 'speed' ? '#5ed8c9' : '#9ab9ff';
@@ -1010,5 +1032,5 @@
 })();
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  navigator.serviceWorker.register('./sw.js?v=15').catch(() => {});
+  navigator.serviceWorker.register('./sw.js?v=16').catch(() => {});
 }
