@@ -28,6 +28,7 @@
   const WOLF_HIT_DAMAGE = 15;
   const IMMORTAL_ROUNDS = 2;
   const FLOOR_KILL_TARGET = 20;
+  const FLOOR_ENEMY_SPACING = 108;
   const WARDEN_INTERVAL = 5;
   const WEAPON_COUNT = 2;
   const SAVE_KEY = 'dungeon-crawler-save-v4';
@@ -271,7 +272,7 @@
     boss = null;
     exitGate = { x: world.w - 175, y: world.h / 2, open: false, triggered: false };
     createFloorGeometry();
-    spawnMonsters(4 + Math.min(floor, 10) * 3);
+    spawnMonstersAcrossFloor();
     spawnPotions(3);
     spawnWeapons(WEAPON_COUNT);
     updateObjective();
@@ -338,6 +339,23 @@
       const pos = freeSpot(520, 0, 430);
       const type = (i + floor) % 3 === 0 ? 'runner' : 'brawler';
       monsters.push({ x: pos.x, y: pos.y, r: type === 'runner' ? 18 : 20, hp: 136, maxHp: 136, type, angle: rand() * TAU, attackCooldown: rand(), hitTimer: 0, dead: false, wander: rand() * TAU });
+    }
+  }
+
+  function spawnMonstersAcrossFloor() {
+    const columns = Math.ceil((world.w - 320) / FLOOR_ENEMY_SPACING);
+    const rows = Math.ceil((world.h - 240) / FLOOR_ENEMY_SPACING);
+    for (let column = 0; column < columns; column += 1) {
+      for (let row = 0; row < rows; row += 1) {
+        const x = 220 + column * FLOOR_ENEMY_SPACING + (rand() - .5) * 34;
+        const y = 140 + row * FLOOR_ENEMY_SPACING + (rand() - .5) * 34;
+        const candidate = { x, y };
+        if (inWall(candidate.x, candidate.y, 28)) continue;
+        if (distance(candidate, player) < 400 || distance(candidate, exitGate) < 155) continue;
+        if (monsters.some((other) => distance(candidate, other) < FLOOR_ENEMY_SPACING * .48)) continue;
+        const type = (column + row + floor) % 3 === 0 ? 'runner' : 'brawler';
+        monsters.push({ x, y, r: type === 'runner' ? 18 : 20, hp: 136, maxHp: 136, type, angle: rand() * TAU, attackCooldown: rand(), hitTimer: 0, dead: false, wander: rand() * TAU });
+      }
     }
   }
 
@@ -1032,5 +1050,5 @@
 })();
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  navigator.serviceWorker.register('./sw.js?v=16').catch(() => {});
+  navigator.serviceWorker.register('./sw.js?v=17').catch(() => {});
 }
