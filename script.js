@@ -29,6 +29,7 @@
   const IMMORTAL_ROUNDS = 2;
   const FLOOR_KILL_TARGET = 20;
   const FLOOR_ENEMY_SPACING = 108;
+  const ENEMY_FIELD_VERSION = 2;
   const WARDEN_INTERVAL = 5;
   const WEAPON_COUNT = 2;
   const SAVE_KEY = 'dungeon-crawler-save-v4';
@@ -181,6 +182,7 @@
       elapsed,
       floorTime,
       seed,
+      enemyFieldVersion: ENEMY_FIELD_VERSION,
       player: { ...player, immortalTimer: encodeTimer(player.immortalTimer) },
       wolves: wolves.map((wolf) => ({ ...wolf, immortalTimer: encodeTimer(wolf.immortalTimer) })),
       monsters,
@@ -232,6 +234,10 @@
     world = save.world;
     boss = save.boss || null;
     exitGate = save.exitGate || { x: world.w - 175, y: world.h / 2, open: false, triggered: false };
+    if (Number(save.enemyFieldVersion) !== ENEMY_FIELD_VERSION && floorKills < FLOOR_KILL_TARGET) {
+      monsters = [];
+      spawnMonstersAcrossFloor();
+    }
     titleScreen.hidden = true;
     resultScreen.hidden = true;
     breakScreen.hidden = true;
@@ -1050,5 +1056,5 @@
 })();
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  navigator.serviceWorker.register('./sw.js?v=17').catch(() => {});
+  navigator.serviceWorker.register('./sw.js?v=18').catch(() => {});
 }
