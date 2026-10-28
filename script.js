@@ -10,6 +10,8 @@
   const controls = document.querySelector('#controls');
   const objective = document.querySelector('#objective');
   const objectiveText = document.querySelector('#objectiveText');
+  const breakPromptText = document.querySelector('#breakPromptText');
+  const resultMoment = document.querySelector('#resultMoment');
   const toast = document.querySelector('#toast');
   const playButton = document.querySelector('#playButton');
   const restartButton = document.querySelector('#restartButton');
@@ -26,11 +28,13 @@
   const WOLF_DAMAGE = 13;
   const WOLF_MAX_HP = 100;
   const WOLF_HIT_DAMAGE = 15;
+  const PLAYER_HIT_DAMAGE = 25;
   const IMMORTAL_ROUNDS = 2;
   const FLOOR_KILL_TARGET = 20;
   const FLOOR_ENEMY_SPACING = 108;
   const ENEMY_FIELD_VERSION = 2;
-  const WARDEN_INTERVAL = 5;
+  const BREAK_INTERVAL = 5;
+  const WARDEN_INTERVAL = 1;
   const WEAPON_COUNT = 2;
   const SAVE_KEY = 'dungeon-crawler-save-v4';
   let view = { w: 0, h: 0, dpr: 1 };
@@ -40,6 +44,7 @@
   let score = 0;
   let kills = 0;
   let floorKills = 0;
+  let bestMoment = 'THE DESCENT BEGINS';
   let breakPromptPending = false;
   let elapsed = 0;
   let floorTime = 0;
@@ -105,6 +110,7 @@
     score = 0;
     kills = 0;
     floorKills = 0;
+    bestMoment = 'THE DESCENT BEGINS';
     breakPromptPending = false;
     elapsed = 0;
     seed = 12;
@@ -182,6 +188,7 @@
       elapsed,
       floorTime,
       seed,
+      bestMoment,
       enemyFieldVersion: ENEMY_FIELD_VERSION,
       player: { ...player, immortalTimer: encodeTimer(player.immortalTimer) },
       wolves: wolves.map((wolf) => ({ ...wolf, immortalTimer: encodeTimer(wolf.immortalTimer) })),
@@ -208,6 +215,7 @@
     score = Number(save.score) || 0;
     kills = Number(save.kills) || 0;
     floorKills = Number(save.floorKills) || 0;
+    bestMoment = typeof save.bestMoment === 'string' && save.bestMoment ? save.bestMoment : 'THE DESCENT BEGINS';
     breakPromptPending = Boolean(save.breakPromptPending);
     elapsed = Number(save.elapsed) || 0;
     floorTime = Number(save.floorTime) || 0;
@@ -249,7 +257,7 @@
     updateCamera();
     updateHud();
     showToast(`RUN RESTORED · FLOOR ${formatFloor(floor)}`);
-    if (breakPromptPending && floor >= 15) showBreakPrompt();
+    if (breakPromptPending) showBreakPrompt();
     return true;
   }
 
@@ -476,8 +484,9 @@
       score += Math.max(0, 500 - Math.floor(floorTime * 3));
       floor += 1;
       loadFloor();
+      bestMoment = `REACHED FLOOR ${formatFloor(floor)}`;
       showToast(`FLOOR ${formatFloor(floor)} · DEEPER STILL`);
-      if (floor === 15) {
+      if (floor % BREAK_INTERVAL === 0) {
         breakPromptPending = true;
         saveGame();
         showBreakPrompt();
@@ -566,7 +575,7 @@
           const speed = monster.type === 'runner' ? 92 + difficulty * 9 : 66 + difficulty * 8;
           moveCircle(monster, Math.cos(chaseAngle) * speed * dt, Math.sin(chaseAngle) * speed * dt);
         } else if (monster.attackCooldown <= 0) {
-          if (target === player) hurtPlayer(1);
+          if (target === player) hurtPlayer(PLAYER_HIT_DAMAGE);
           else hurtWolf(target, WOLF_HIT_DAMAGE);
           monster.attackCooldown = monster.type === 'runner' ? 1.05 : 1.3;
         }
@@ -592,7 +601,7 @@
     const targetRadius = target === player ? player.r : target.r;
     if (d > targetRadius + 88) moveCircle(boss, Math.cos(angle) * 40 * dt, Math.sin(angle) * 40 * dt);
     else if (boss.attackCooldown <= 0) {
-      if (target === player) hurtPlayer(20);
+      if (target === player) hurtPlayer(PLAYER_HIT_DAMAGE);
       else hurtWolf(target, WOLF_HIT_DAMAGE);
       boss.attackCooldown = 1.05;
       for (let i = 0; i < 10; i += 1) emitParticle(target.x, target.y, '#bd4b40', 55 + rand() * 50);
@@ -608,10 +617,12 @@
         if (potion.kind === 'giant') {
           player.giantTimer = 14;
           wolves.forEach((wolf) => { wolf.giantTimer = 14; });
+          bestMoment = `GIANT FORM ON FLOOR ${formatFloor(floor)}`;
           showToast('GIANT FORM · THE PACK GROWS BIG');
         } else if (potion.kind === 'speed') {
           player.speedTimer = 14;
           wolves.forEach((wolf) => { wolf.speedTimer = 14; });
+          bestMoment = `SPEED SURGE ON FLOOR ${formatFloor(floor)}`;
           showToast('VELOCITY SURGE · THE PACK IS SUPER FAST');
         } else {
           player.immortalTimer = Infinity;
@@ -625,6 +636,7 @@
             wolf.x = player.x + Math.cos(wolf.formationAngle) * 42;
             wolf.y = player.y + Math.sin(wolf.formationAngle) * 42;
           });
+          bestMoment = `IMMORTAL POTION ON FLOOR ${formatFloor(floor)}`;
           showToast('IMMORTAL · 2 FLOORS · THE PACK RETURNS');
         }
         score += 150;
@@ -697,6 +709,7 @@
     if (target !== boss && floorKills < FLOOR_KILL_TARGET) spawnMonsters(1);
     for (let i = 0; i < (target === boss ? 36 : 15); i += 1) emitParticle(target.x, target.y, target === boss ? '#c93e3a' : '#a44c46', 30 + rand() * 100);
     if (target === boss) {
+      bestMoment = `DEFEATED THE WARDEN ON FLOOR ${formatFloor(floor)}`;
       showToast('THE WARDEN FALLS');
       exitGate.open = true;
       score += 1000;
@@ -744,6 +757,7 @@
     resetInput();
     controls.hidden = true;
     objective.hidden = true;
+    breakPromptText.textContent = `You reached floor ${formatFloor(floor)}. Would you like to pause and see your run totals?`;
     breakScreen.hidden = false;
   }
 
@@ -756,7 +770,7 @@
     objective.hidden = false;
     updateObjective();
     saveGame();
-    showToast('KEEP GOING · FLOOR 15');
+    showToast(`KEEP GOING · FLOOR ${formatFloor(floor)}`);
   }
 
   function finishGame(won, reason = '') {
@@ -771,12 +785,13 @@
     hud.hidden = true;
     resultScreen.hidden = false;
     const takingBreak = reason === 'break';
-    document.querySelector('#resultEyebrow').textContent = takingBreak ? 'A REST AT FLOOR 15' : won ? 'THE DUNGEON REMEMBERS' : 'THE DARK CLAIMS YOU';
+    document.querySelector('#resultEyebrow').textContent = takingBreak ? `A REST AT FLOOR ${formatFloor(floor)}` : won ? 'THE DUNGEON REMEMBERS' : 'THE DARK CLAIMS YOU';
     document.querySelector('#resultTitle').textContent = takingBreak ? 'BREAK TIME' : won ? 'YOU ESCAPED' : 'YOU FELL';
-    document.querySelector('#resultBlurb').textContent = takingBreak ? 'You made it through 15 floors. Here are your run totals.' : won ? 'The gate groans shut behind you. For now.' : 'The dungeon keeps what it catches. Descend again?';
+    document.querySelector('#resultBlurb').textContent = takingBreak ? `You reached floor ${formatFloor(floor)}. Here are your run totals.` : won ? 'The gate groans shut behind you. For now.' : 'The dungeon keeps what it catches. Descend again?';
     document.querySelector('#resultScore').textContent = formatNumber(score);
     document.querySelector('#resultKills').textContent = String(kills).padStart(2, '0');
     document.querySelector('#resultFloor').textContent = `${formatFloor(floor)} / ∞`;
+    resultMoment.textContent = bestMoment;
   }
 
   function render() {
@@ -1056,5 +1071,5 @@
 })();
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  navigator.serviceWorker.register('./sw.js?v=18').catch(() => {});
+  navigator.serviceWorker.register('./sw.js?v=22').catch(() => {});
 }

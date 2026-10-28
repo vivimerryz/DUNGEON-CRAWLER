@@ -230,6 +230,10 @@ html, body { background: #d9efec; }
 .controls .action-glyph { color: #1f7f83; text-shadow: 0 0 12px rgba(42,156,166,.35); }
 .controls .control-button small { color: #467b55; }
 
+.best-moment { display: grid; gap: 7px; margin: -12px 0 28px; padding: 13px 16px; border: 1px solid rgba(44, 119, 125, .28); background: rgba(223, 244, 240, .5); }
+.best-moment span { color: #376873; font: 700 8px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .14em; }
+.best-moment strong { color: #245767; font: 800 13px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; }
+
 /* In-game restart control. */
 .game-restart-button { position: static; z-index: 2; display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 0 11px; border: 1px solid rgba(31, 93, 105, .42); border-radius: 999px; background: rgba(238, 251, 247, .88); color: #245767; box-shadow: 0 5px 16px rgba(29, 77, 88, .16); cursor: pointer; font: 800 9px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .14em; pointer-events: auto; transition: transform .16s ease, filter .16s ease, box-shadow .16s ease; }
 .game-restart-button span:first-child { color: #1f7f83; font-size: 15px; line-height: 1; }

@@ -7,7 +7,7 @@
   <meta name="description" content="Dungeon Crawler — a touch-first, no-login dungeon escape game." />
   <title>Dungeon Crawler</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="styles.css?v=18" />
+  <link rel="stylesheet" href="styles.css?v=22" />
 </head>
 <body>
   <main class="game-shell" aria-label="Dungeon Crawler game">
@@ -59,6 +59,7 @@
           <div><span>ENEMIES STOPPED</span><strong id="resultKills">00</strong></div>
           <div><span>DEPTH REACHED</span><strong id="resultFloor">01 / ∞</strong></div>
         </div>
+        <div class="best-moment"><span>BEST MOMENT</span><strong id="resultMoment">THE DESCENT BEGINS</strong></div>
         <button class="primary-button" id="restartButton" type="button"><span class="button-icon">↻</span><span>DESCEND AGAIN</span></button>
       </div>
     </section>
@@ -67,7 +68,7 @@
       <div class="break-panel">
         <div class="eyebrow">A REST IN THE DARK</div>
         <h2>TAKE A BREAK?</h2>
-        <p>You reached floor 15. Would you like to pause and see your run totals?</p>
+        <p id="breakPromptText">You reached a checkpoint. Would you like to pause and see your run totals?</p>
         <div class="break-actions">
           <button class="primary-button" id="breakYesButton" type="button"><span class="button-icon">✓</span><span>YES · SHOW SCORE</span></button>
           <button class="secondary-button" id="breakNoButton" type="button"><span class="button-icon">→</span><span>NO · KEEP GOING</span></button>
@@ -92,6 +93,6 @@
       </div>
     </section>
   </main>
-  <script src="script.js?v=18"></script>
+  <script src="script.js?v=22"></script>
 </body>
 </html>
